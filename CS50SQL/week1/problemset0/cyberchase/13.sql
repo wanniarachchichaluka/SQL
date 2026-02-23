@@ -1,0 +1,1 @@
+SELECT "season","episode_in_season", "title", "topic" FROM "episodes" WHERE "topic" LIKE '%fraction%' OR "topic" LIKE '%algebra%';
