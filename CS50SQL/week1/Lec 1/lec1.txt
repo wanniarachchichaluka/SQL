@@ -1,0 +1,110 @@
+sqlite3 longlist.db
+.system cls to clear the terminal
+
+.tables
+
+SELECT "id" FROM "publishers" WHERE "publisher" = 'MacLehose Press';
+SELECT "title" FROM "publishers" WHERE "publisher_id" = 12;
+sqlite> SELECT "title" FROM "books" WHERE "publisher_id" = (  
+(x1...>    SELECT "id" FROM "publishers"                                     
+(x1...>    WHERE "publisher" = 'MacLehose Press'                             
+(x1...> );
+
+
+sqlite> SELECT "rating" FROM "ratings" WHERE "book_id" = (
+(x1...>    SELECT "id" FROM "books" WHERE "title" = 'In Memory of Memory'
+(x1...> );
+
+sqlite> SELECT AVG("rating") FROM "ratings" WHERE "book_id" = (
+(x1...>    SELECT "id" FROM "books" WHERE "title" = 'In Memory of Memory'
+(x1...> );
+
+
+#many to many
+sqlite> SELECT "name" FROM "authors"
+   ...> WHERE "id" = (
+(x1...>     SELECT "author_id" FROM "authored"
+(x1...>     WHERE "book_id" = (
+(x2...>         SELECT "id" FROM "books"
+(x2...>         WHERE "title" = 'Flights'
+(x2...>         )
+(x1...> );
+
+
+#IN keyword
+sqlite> SELECT "id" FROM "authors" WHERE "name" = 'Fernanda Melchor';
+24
+sqlite> SELECT "book_id" FROM "authored" WHERE "author_id" = (
+(x1...>     SELECT "id" FROM "authors" WHERE "name" = 'Fernanda Melchor'
+(x1...> );
+14
+48
+sqlite> SELECT "title" FROM "books" WHERE "id" IN (
+(x1...>     SELECT "book_id" FROM "authored"
+(x1...>     WHERE "author_id" = (
+(x2...>         SELECT "id" FROM "authors" WHERE "name" = 'Fernanda Melchor'
+(x2...>     )
+(x1...> );
+Paradais
+Hurricane Season
+
+
+##############################
+sqlite3 sea_lions.db 
+.tables
+
+sqlite> SELECT * FROM "sea_lions"
+   ...> JOIN "migrations" ON "migrations"."id" = "sea_lions"."id";
+
+#INNER JOIN 
+#by default its INNER
+#LEFT JOIN
+#RIGHT JOIN
+#FULL JOIN
+
+sqlite> SELECT * FROM "sea_lions" 
+   ...> LEFT JOIN "migrations" ON "migrations"."id" = "sea_lions"."id";
+10484|Ayah|Zalophus californianus|10484|1000|107
+11728|Spot|Zalophus californianus|11728|1531|56
+11729|Tiger|Zalophus californianus|11729|1370|37
+11732|Mabel|Zalophus californianus|11732|1622|62
+11734|Rick|Zalophus californianus|11734|1491|58
+11790|Jolee|Zalophus californianus|||
+sqlite> SELECT * FROM "sea_lions"
+   ...> RIGHT JOIN "migrations" ON "migrations"."id" = "sea_lions"."id";
+10484|Ayah|Zalophus californianus|10484|1000|107
+11728|Spot|Zalophus californianus|11728|1531|56
+11729|Tiger|Zalophus californianus|11729|1370|37
+11732|Mabel|Zalophus californianus|11732|1622|62
+11734|Rick|Zalophus californianus|11734|1491|58
+|||11735|2723|82
+|||11736|1571|52
+|||11737|1957|92
+sqlite> SELECT * FROM "sea_lions"
+   ...> FULL JOIN "migrations" ON "migrations"."id" = "sea_lions"."id"; 
+10484|Ayah|Zalophus californianus|10484|1000|107
+11728|Spot|Zalophus californianus|11728|1531|56
+11729|Tiger|Zalophus californianus|11729|1370|37
+11732|Mabel|Zalophus californianus|11732|1622|62
+11734|Rick|Zalophus californianus|11734|1491|58
+11790|Jolee|Zalophus californianus|||
+|||11735|2723|82
+|||11736|1571|52
+|||11737|1957|92
+sqlite>
+
+#LEFT OUTER JOIN
+#RIGHT OUTER JOIN
+#FULL OUTER JOIN
+
+#NATURAL JOIN
+sqlite> SELECT * FROM "sea_lions"
+   ...> NATURAL JOIN "migrations";
+10484|Ayah|Zalophus californianus|1000|107
+11728|Spot|Zalophus californianus|1531|56
+11729|Tiger|Zalophus californianus|1370|37
+11732|Mabel|Zalophus californianus|1622|62
+11734|Rick|Zalophus californianus|1491|58
+sqlite> 
+
+1.17.07
