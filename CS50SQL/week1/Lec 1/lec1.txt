@@ -107,4 +107,51 @@ sqlite> SELECT * FROM "sea_lions"
 11734|Rick|Zalophus californianus|1491|58
 sqlite> 
 
-1.17.07
+#Sets
+sqlite> SELECT "name" FROM "translators" 
+   ...> UNION 
+   ...> SELECT "name" FROM "authors";
+
+sqlite> SELECT 'author' AS "profession", "name" FROM "authors" 
+   ...> UNION
+   ...> SELECT 'translator' AS "profession", "name" FROM "translators";
+
+sqlite> SELECT "name" FROM "authors"
+   ...> INTERSECT
+   ...> SELECT "name" FROM "translators";
+
+sqlite> SELECT "name" FROM "authors"
+   ...> EXCEPT
+   ...> SELECT "name" FROM "translators";
+
+sqlite> SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+(x1...>     SELECT "id" FROM "translators" WHERE "name" = 'Sophie Hughes' 
+(x1...> );
+
+
+
+sqlite> SELECT "book_id" FROM "translated" WHERE "translator_id" = (     
+(x1...>     SELECT "id" FROM "translators" WHERE "name" = 'Sophie Hughes'
+(x1...> )
+   ...> INTERSECT
+   ...> SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+(x1...>     SELECT "id" FROM "translators" WHERE "name" = 'Margaret Jull Costa'
+(x1...> );
+
+sqlite> SELECT "book_id", AVG("rating") AS "average rating"
+   ...> FROM "ratings"
+   ...> GROUP BY "book_id";
+
+sqlite> SELECT "book_id", ROUND(AVG("rating"),2) AS "average rating"
+   ...> FROM "ratings"
+   ...> GROUP BY "book_id"
+   ...> HAVING "average rating" > 4.0;
+
+sqlite> SELECT "book_id", COUNT("rating") FROM "ratings"              
+   ...> GROUP BY "book_id";
+
+SELECT "book_id", ROUND(AVG("rating"), 2) AS "average rating"
+FROM "ratings" 
+GROUP BY "book_id"
+HAVING "average rating" > 4.0
+ORDER BY "average rating" DESC;
