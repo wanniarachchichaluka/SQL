@@ -1,4 +1,5 @@
-
+Q1.1
+sqlite3 packages.db              
 SELECT "address", "type" FROM "addresses" WHERE "id" = (
     SELECT "address_id" FROM "scans" WHERE "package_id" = (
         SELECT "id" FROM "packages" WHERE "from_address_id" = (
@@ -9,7 +10,7 @@ SELECT "address", "type" FROM "addresses" WHERE "id" = (
     ) AND "action" = 'Drop'
 );
 
-
+Q1.2
 SELECT "contents" FROM "packages" WHERE "from_address_id" IS NULL;
 SELECT "type" FROM "addresses" WHERE "id" = (
     SELECT "address_id" FROM "scans" WHERE "package_id" = (
@@ -17,3 +18,22 @@ SELECT "type" FROM "addresses" WHERE "id" = (
     ) AND "action" = 'Drop' ORDER BY "timestamp" DESC LIMIT 1   
 );
 
+
+
+
+
+Q1.3
+SELECT "name" FROM "drivers" WHERE "id" = (
+    SELECT "driver_id" FROM "scans" WHERE "package_id" = (
+        SELECT "id" FROM "packages" WHERE "from_address_id" = (
+            SELECT "id" FROM "addresses" WHERE "address" = '109 Tileston Street'
+        ) 
+    )ORDER BY "timestamp" DESC LIMIT 1
+);
+SELECT "contents" FROM "packages" WHERE "from_address_id" = (
+    SELECT "id" FROM "addresses" WHERE "address" = '109 Tileston Street'
+);
+
+
+Q2.1
+SELECT "name", "city" FROM "schools" WHERE "type" = 'Public School';
