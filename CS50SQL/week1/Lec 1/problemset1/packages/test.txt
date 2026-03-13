@@ -34,6 +34,3 @@ SELECT "contents" FROM "packages" WHERE "from_address_id" = (
     SELECT "id" FROM "addresses" WHERE "address" = '109 Tileston Street'
 );
 
-
-Q2.1
-SELECT "name", "city" FROM "schools" WHERE "type" = 'Public School';
