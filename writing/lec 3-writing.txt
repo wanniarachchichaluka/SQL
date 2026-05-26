@@ -1,0 +1,152 @@
+sqlite> .read schema.sql
+
+sqlite> INSERT INTO "collections" ("id","title","accession_number","acquired")
+   ...> VALUES (1, 'Profusion of flowers', '56.257', '1956-04-12'); 
+sqlite> SELECT * FROM "collections";
+1|Profusion of flowers|56.257|1956-04-12
+sqlite> 
+
+sqlite> INSERT INTO "collections" ("title","accession_number","acquired")     
+   ...> VALUES ('Spring outing', '14.76', '1911-01-08');                
+sqlite> SELECT * FROM "collections";
+1|Profusion of flowers|56.257|1956-04-12
+2|Farmers working at dawn|11.6152|1911-08-03
+3|Spring outing|14.76|1911-01-08
+sqlite> 
+
+
+sqlite> INSERT INTO "collections" ("title", "accession_number", "acquired") 
+   ...> VALUES 
+   ...>     ('Imaginative Landscape', '56.496', NULL),
+   ...>     ('Hariyeh', '06.12849', '1906-01-01');
+
+PS D:\DevOps\SQL\writing> code mfs.csv
+PS D:\DevOps\SQL\writing> sqlite3 mfa.db
+SQLite version 3.51.1 2025-11-28 17:28:25
+Enter ".help" for usage hints.
+sqlite> .schema
+sqlite> .read schema.sql
+sqlite> .schema
+CREATE TABLE IF NOT EXISTS "collections" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    "accession_number" TEXT NOT NULL UNIQUE,
+    "aquired" NUMERIC,
+    PRIMARY KEY("id")
+);
+sqlite> .import --csv --skip 1 mfs.csv collections
+
+
+DELETE FROM "collections";
+sqlite> .import --csv mfs2.csv temp
+sqlite> .schema
+CREATE TABLE IF NOT EXISTS "collections" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    "accession_number" TEXT NOT NULL UNIQUE,
+    "aquired" NUMERIC,
+    PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "temp"(
+"title" TEXT, "accession_number" TEXT, "acquired" TEXT);
+sqlite> INSERT INTO "collections" ("title", "accession_number", "acquired")
+   ...> SELECT "title", "accession_number", "acquired" FROM "temp";  
+
+   33.18
+
+sqlite> DELETE FROM "collections" WHERE "title" = 'Spring outing';
+
+DELETE FROM "collections" WHERE "acquired" IS NULL;
+
+DELETE FROM "collections" WHERE "acquired" < '1911-01-01';
+
+#Foreign Key constraints - deleting them 46.26 /schema3.sql
+DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
+#will get error: 'Runtime error: FOREIGN KEY constraint failed (19)
+#let's try deleting the particular row from created table and then above.
+DELETE FROM "created" WHERE "artist_id" = (
+   SELECT "id" FROM "artists" WHERE "name" = 'Unidentifed artist'
+);
+#Then we can Do 
+DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
+#Without error
+
+#When defining the scema we can specify an action that should hapen when trying 
+#to delete PRIMARY KEY referenced by FOREIGN KEY
+#schema example: 58.34 schema4.sql
+###
+FOREIGN KEY("artist_id) REFERENCES "artist"("id")
+ON DELETE RESTRICT 
+      or  NO ACTION 
+      or  SET NULL
+      or  SET DEFAULT
+      or  CASCADE   
+###
+58.34
+#if used CASCADE when defining schema, will not get foreign constraint error when
+DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

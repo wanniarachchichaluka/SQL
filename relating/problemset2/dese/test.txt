@@ -1,0 +1,86 @@
+
+Q1.2.1
+SELECT "name", "city" FROM "schools" WHERE "type" = 'Public School';
+
+SELECT "name" FROM "districts" WHERE "name" LIKE '%(non-op)';
+
+SELECT AVG("per_pupil_expenditure") AS "Average District Per-Pupil Expenditure" FROM "expenditures";
+
+SELECT "city", COUNT("city") AS "public_school_count" FROM "schools" WHERE "type" = 'Public School' GROUP BY "city" ORDER BY "public_school_count" DESC, "city" ASC LIMIT 10;
+
+SELECT "city", COUNT("city") AS "school_count" FROM "schools" WHERE "type" = 'Public School' GROUP BY "city" HAVING "school_count" < 4 ORDER BY "school_count" DESC, "city" ASC;
+
+
+SELECT "name" FROM "schools" WHERE "id" IN (
+    SELECT "school_id" FROM "graduation_rates" WHERE "graduated" = '100'
+);
+SELECT "schools"."name"
+FROM "schools"
+JOIN "graduation_rates" ON "schools"."id" = "graduation_rates"."school_id"
+WHERE "graduation_rates"."graduated" = 100;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
