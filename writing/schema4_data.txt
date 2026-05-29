@@ -1,0 +1,18 @@
+INSERT INTO "artists" ("id", "name") VALUES 
+(1, 'Li Yin'),
+(2, 'Qian Weicheng'),
+(3, 'Unidentified artist'),
+(4, 'Zhou Chen');
+
+INSERT INTO "collections" ("id", "title", "accession_number", "acquired") VALUES 
+(1, 'Farmers working at dawn', '11.6152', '1911-08-03'),
+(2, 'Imaginative Landscape', '56.496', NULL),
+(3, 'Profusion of flowers', '56.257', '1956-04-12'),
+(4, 'Spring outing', '14.76', '1911-01-08');
+
+INSERT INTO "created" ("artist_id", "collection_id") VALUES 
+(2, 3),
+(1, 1),
+(1, 2),
+(4, 4);
+
