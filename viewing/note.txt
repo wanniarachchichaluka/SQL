@@ -1,0 +1,176 @@
+#Simplifying
+##Hard way
+sqlite> SELECT "title" FROM "books"
+   ...> WHERE "id" IN (
+(x1...>     SELECT "book_id" FROM "authored"
+(x1...>     WHERE "author_id" = (
+(x2...>         SELECT "id" FROM "authors"
+(x2...>         WHERE "name" = 'Gauz'         
+(x2...>     )
+(x1...> );
+##Easy way 
+sqlite> SELECT "name", "title" FROM "authors"
+   ...> JOIN "authored" ON "authors"."id" = "authored"."author_id"
+   ...> JOIN "books" ON "books"."id" = "authored"."book_id";
+
+#creating views
+sqlite> CREATE VIEW "longlist" AS
+   ...> SELECT "name","title" FROM "authors"
+   ...> JOIN "authored" ON "authors"."id" = "authored"."author_id"
+   ...> JOIN "books" ON "books"."id" = "authored"."book_id";
+sqlite> .schema
+CREATE TABLE IF NOT EXISTS "authors" (
+    "id" INTEGER,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "books" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "authored" (
+    "author_id" INTEGER,
+    "book_id" INTEGER,
+    PRIMARY KEY("author_id", "book_id"),
+    FOREIGN KEY("author_id") REFERENCES "authors"("id") ON DELETE CASCADE,
+    FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE
+);
+CREATE VIEW "longlist" AS
+SELECT "name","title" FROM "authors"
+JOIN "authored" ON "authors"."id" = "authored"."author_id"
+JOIN "books" ON "books"."id" = "authored"."book_id"
+/* longlist(name,title) */;
+sqlite> 
+
+sqlite> SELECT * FROM "longlist";
+Eva Baltasar|Boulder
+Han Kang|The White Book
+Gauz|Standing Heavy
+Olga Tokarczuk|Flights
+sqlite> 
+##now we can do:
+sqlite> SELECT "title" FROM "longlist"
+   ...> WHERE "name" = 'Gauz';
+Standing Heavy
+
+#Agregating.
+SELECT "book_id", AVG("rating") AS "rating" FROM "ratings"
+>>GROUP BY "book_id";
+
+SELECT "book_id", ROUND(AVG("rating"),2) AS "rating" FROM "rtings"
+>>GROUP BY "book_id";
+
+SELECT "book_id", "title","year", ROUND(AVG("rating"), 2) AS "rating"
+>>FROM "ratings"
+JOIN "books" ON "ratings"."book_id" = "books"."id"
+GROUP BY "book_id";
+
+CREATE VIEW "average_book_ratings" AS
+>>SELECT "book_id", "title", "year", ROUND(AVG("rating"), 2) AS "rating"
+FROM "ratings"
+JOIN "books" ON "ratings"."book_id" = "books"."id"
+GROUP BY "book_id";
+#Then-SELECT * FROM "average_book_ratings";
+
+SELECT * FROM "average_book_ratings";
+
+#Temoorary views
+SELECT "year", ROUND(AVG("rating"), 2) AS "rating" FROM "average_book_ratings"
+>GROUP BY "year";
+
+CREATE TEMPORARY VIEW "average_ratings_by_year" AS
+>>SELECT "year", ROUND(AVG("rating"), 2) AS "rating" FROM "average_book_ratings"
+GROUP BY "year";
+
+#CTE - Common Table Expression
+WITH name AS (
+    SELECT ...
+), ...
+SELECT ... FROM name;
+
+DROP VIEW "average_book_ratings";
+WITH "average_book_ratings" AS (
+    SELECT "book_id", "title", "year", ROUND(AVG("ratings"), 2) AS "rating"
+    FROM "ratings"
+    JOIN "books" ON "ratings"."book_id" = "books"."id"
+    GROUP BY "book_id"
+)
+SELECT "year", ROUND(AVG("rating"), 2)AS "rating"
+FROM "average_book_ratings"
+GROUP BY "year";
+
+SELECT "id", "title" FROM "books"
+WHERE "year"=2022;
+
+CREATE VIEW "2022" AS
+SELECT "id", "title" FROM "books"
+WHERE "year"=2022;
+
+CREATE VIEW "2021" AS
+SELECT "id", "title" FROM "books"
+WHERE "year" = 2021;
+
+#below will give error since views can't be updated(no solution)
+UPDATE "2021" SET "title" = 'The Minor Detail'
+WHERE "title" = 'Minor Detail';
+
+#Security
+#By creating views which omiting certain colums which contain sensitive data
+sqlite> CREATE TABLE IF NOT EXISTS "rides" (
+(x1...> "id" INTEGER, 
+(x1...> "origin" TEXT NOT NULL,
+(x1...> "destination" TEXT NOT NULL,
+(x1...> "rider" TEXT NOT NULL,
+(x1...> PRIMARY KEY("id")
+(x1...> );
+
+SELECT "id", "origin", "destination" FROM "rides";
+SELECT "id", "origin", "destination", 'Anonymous' AS "rider"
+>FROM "rides";
+
+CREATE VIEW "analysis" AS 
+SELECT "id", "origin", "destination", 'Anonymous' AS "rider"
+FROM "rides";
+
+SELECT * FROM "rides";
+
+#Soft Deletions
+ALTER TABLE "collections" ADD COLUMN "deleted" INTEGER DEFAULT 0;
+SELECT * FROM "collections";
+UPDATE "collections" SET "deleted" = 1
+>WHERE "title" = 'Farmers working at dawn';
+
+SELECT * FROM "collections" WHERE "deleted" = 0;
+CREATE VIEW "current_collections" AS
+SELECT "id","title","accession_number", "aquired"
+FROM "collections" WHERE "deleted" = 0;
+
+###
+CREATE TRIGGER name
+INSTEAD OF DELETE ON view
+FOR EACH ROW
+BEGIN
+    ...;
+END;
+
+CREATE TRIGGER "delete"
+>INSTEAD OF DELETE ON "current_collections"
+>FOR EACH ROW
+>BEGIN
+>   UPDATE "collections" SET "deleted" = 1
+>   WHERE "id" = OLD."id"
+>END
+
+CREATE TRIGGER "insert_when_exists"
+INSTEAD OF INSERT ON "current_collections"
+FOR EACH ROW
+WHEN NEW."accession_number" IN (
+    SELECT "accession_number" FROM "collections"
+)
+BEGIN   
+    UPDATE "collections" SET "deleted" = 0
+    WHERE "accession_number" = NEW."accession_number";
+END;
+
+

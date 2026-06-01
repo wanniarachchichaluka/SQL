@@ -1,0 +1,46 @@
+-- Create authors table
+CREATE TABLE IF NOT EXISTS "authors" (
+    "id" INTEGER,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+
+-- Create books table
+CREATE TABLE IF NOT EXISTS "books" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+
+-- Create authored table (junction table for many-to-many relationship)
+CREATE TABLE IF NOT EXISTS "authored" (
+    "author_id" INTEGER,
+    "book_id" INTEGER,
+    PRIMARY KEY("author_id", "book_id"),
+    FOREIGN KEY("author_id") REFERENCES "authors"("id") ON DELETE CASCADE,
+    FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE
+);
+
+
+###############
+-- Insert authors
+INSERT INTO "authors" ("id", "name") VALUES 
+(23, 'Eva Baltasar'),
+(31, 'Han Kang'),
+(27, 'Gauz'),
+(58, 'Olga Tokarczuk');
+
+-- Insert books
+INSERT INTO "books" ("id", "title") VALUES 
+(1, 'Boulder'),
+(74, 'The White Book'),
+(4, 'Standing Heavy'),
+(78, 'Flights');
+
+-- Insert authored relationships
+INSERT INTO "authored" ("author_id", "book_id") VALUES 
+(23, 1),
+(31, 74),
+(27, 4),
+(58, 78);
+
