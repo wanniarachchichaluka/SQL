@@ -1,0 +1,33 @@
+-- Create people table (actors/actresses)
+CREATE TABLE IF NOT EXISTS "people" (
+    "id" INTEGER,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+
+-- Create movies table
+CREATE TABLE IF NOT EXISTS "movies" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);
+
+CREATE TABLE IF NOT EXISTS "ratings" (
+    "id" INTEGER,
+    "movie_id" INTEGER UNIQUE,
+    "rating" REAL NOT NULL,
+    "votes" INTEGER NOT NULL,
+    PRIMARY KEY("id"),
+    FOREIGN KEY("movie_id") REFERENCES "movies"("id") 
+);
+
+-- Create stars table (junction table for many-to-many relationship)
+CREATE TABLE IF NOT EXISTS "stars" (
+    "person_id" INTEGER,
+    "movie_id" INTEGER,
+    PRIMARY KEY("person_id", "movie_id"),
+    FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE,
+    FOREIGN KEY("movie_id") REFERENCES "movies"("id") ON DELETE CASCADE
+);
+#####################
+

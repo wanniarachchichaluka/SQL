@@ -1,0 +1,208 @@
+sqlite3 movies.db
+sqlite> .timer on
+
+#index-A structure used to speed up the retrieval of rows from a table.
+#to make queries faster
+CREATE INDEX name
+>ON table (column0,...);
+
+sqlite> CREATE INDEX "title_index" ON "movies" ("title");
+Run Time: real 0.360618 user 0.171875 sys 0.093750
+sqlite> SELECT * FROM "movies" WHERE "title" = 'Cars';
+317219|Cars|2006
+Run Time: real 0.002164 user 0.000000 sys 0.000000
+sqlite> 
+sqlite> EXPLAIN QUERY PLAN 
+   ...> SELECT * FROM "movies" WHERE "title" = 'Cars';
+QUERY PLAN
+`--SEARCH movies USING INDEX title_index (title=?)
+Run Time: real 0.006097 user 0.000000 sys 0.000000
+sqlite> 
+
+sqlite> DROP INDEX "title_index";
+Run Time: real 0.022149 user 0.000000 sys 0.015625
+sqlite> EXPLAIN QUERY PLAN 
+   ...> SELECT * FROM "movies" WHERE "title" = 'Cars';
+QUERY PLAN
+`--SCAN movies
+Run Time: real 0.002367 user 0.000000 sys 0.000000
+sqlite> 
+
+sqlite> SELECT "title" FROM "movies" WHERE "id" IN (
+(x1...>         SELECT "movie_id" FROM "stars" WHERE "person_id" = (
+(x2...>                 SELECT "id" FROM "people" WHERE "name" = 'Tom Hanks'
+(x2...>         )
+(x1...> );
+Borat Subsequent Moviefilm
+Asteroid City
+Run Time: real 0.523493 user 0.062500 sys 0.109375
+sqlite> 
+
+#creating index for above
+sqlite> EXPLAIN QUERY PLAN
+   ...> SELECT "title" FROM "movies" WHERE "id" IN (                        
+(x1...>         SELECT "movie_id" FROM "stars" WHERE "person_id" = (
+(x2...>                 SELECT "id" FROM "people" WHERE "name" = 'Tom Hanks'
+(x2...>         )
+(x1...> );
+QUERY PLAN
+|--SEARCH movies USING INTEGER PRIMARY KEY (rowid=?)
+`--LIST SUBQUERY 2
+   |--SCAN stars
+   |--SCALAR SUBQUERY 1
+   |  `--SCAN people
+   `--CREATE BLOOM FILTER
+Run Time: real 0.006935 user 0.000000 sys 0.000000
+sqlite> 
+
+sqlite> CREATE INDEX "person_index" ON "stars" ("person_id"); 
+sqlite> CREATE INDEX "name_index" ON "people" ("name");      
+sqlite> .timer on
+sqlite> EXPLAIN QUERY PLAN
+   ...> SELECT "title" FROM "movies" WHERE "id" IN (
+(x1...>         SELECT "movie_id" FROM "stars" WHERE "person_id" = (
+(x2...>                 SELECT "id" FROM "people" WHERE "name" = 'Tom Hanks'
+(x2...>         )       
+(x1...> );
+QUERY PLAN
+|--SEARCH movies USING INTEGER PRIMARY KEY (rowid=?)
+`--LIST SUBQUERY 2
+   |--SEARCH stars USING INDEX person_index (person_id=?)
+   |--SCALAR SUBQUERY 1
+   |  `--SEARCH people USING COVERING INDEX name_index (name=?)
+   `--CREATE BLOOM FILTER
+Run Time: real 0.012669 user 0.000000 sys 0.000000
+sqlite> 
+
+#covering index
+sqlite> DROP INDEX "person_index";
+Run Time: real 0.026733 user 0.015625 sys 0.015625
+sqlite> CREATE INDEX "person_index" ON "stars" ("person_id","movie_id"); 
+Run Time: real 0.672085 user 0.531250 sys 0.140625
+sqlite> EXPLAIN QUERY PLAN
+   ...> SELECT "title" FROM "movies" WHERE "id" IN (
+(x1...>         SELECT "movie_id" FROM "stars" WHERE "person_id" = (
+(x2...>                 SELECT "id" FROM "people" WHERE "name" = 'Tom Hanks'
+(x2...>         )
+(x1...> );
+QUERY PLAN
+|--SEARCH movies USING INTEGER PRIMARY KEY (rowid=?)
+`--LIST SUBQUERY 2
+   |--SEARCH stars USING COVERING INDEX person_index (person_id=?)
+   |--SCALAR SUBQUERY 1
+   |  `--SEARCH people USING COVERING INDEX name_index (name=?)
+   `--CREATE BLOOM FILTER
+Run Time: real 0.016331 user 0.000000 sys 0.000000
+sqlite> ##No table lookup anymore
+
+#B-Tree:- A balanced tree structure commonly used to create an index.
+#Hints->Binary tree and linked LIST
+
+#Partial index
+##An index that includes only a subset of rows from a table
+CREATE INDEX name
+ON table (column0, ...)
+WHERE condition;
+
+CREATE INDEX "recents" ON "movies" ("title")
+WHERE "year" = 2023;
+##
+sqlite> EXPLAIN QUERY PLAN 
+   ...> SELECT "title" FROM "movies" WHERE "year" = 2023;
+QUERY PLAN
+`--SCAN movies USING COVERING INDEX recents
+Run Time: real 0.003655 user 0.000000 sys 0.000000
+sqlite> 
+sqlite> EXPLAIN QUERY PLAN
+   ...> SELECT "title" FROM "movies" WHERE "year" = 1998;
+QUERY PLAN
+`--SCAN movies
+Run Time: real 0.002188 user 0.000000 sys 0.000000
+sqlite> 
+
+#Vacuum - cleaning 100%
+$ du -b movies.db
+158949376       movies.db
+
+sqlite> DROP INDEX "person_index";
+$ du -b movies.db
+158949376       movies.db
+
+sqlite> DROP INDEX "name_index";  
+sqlite> DROP INDEX "recents";   
+$ du -b movies.db
+158949376       movies.db
+
+#,so we need to run vacuum to really delete them
+sqlite> VACUUM;
+$ du -b movies.db
+100388864       movies.db
+
+#Concurreny
+##Handling multiple quries at once
+#Transaction = unit of work in a database
+#Properties of transaction - ACID
+#A-Atomicity
+#C-Consistency
+#I-Isolation
+#D-Durability
+
+#Scenario:-Alice giving 10 to Bob
+##need to to use two quries without somebody seeing in mediate of transaction
+#Atomicity
+sqlite> BEGIN TRANSACTION;
+sqlite> UPDATE "accounts" SET "balance" = "balance" + 10
+   ...> WHERE "id" = 2;
+sqlite> UPDATE "accounts" SET "balance" = "balance" - 10
+   ...> WHERE "id" = 1;  
+sqlite> COMMIT;
+sqlite> SELECT * FROM "accounts";
+1|Alice|0
+2|Bob|30
+3|Charlie|30
+sqlite> 
+
+#Alice paying 10 more to Bob
+sqlite> SELECT * FROM "accounts";
+1|Alice|0
+2|Bob|30
+3|Charlie|30
+sqlite> BEGIN TRANSACTION;
+sqlite> UPDATE "accounts" SET "balance" = "balance" + 10
+   ...> WHERE "id" = 2;
+sqlite> UPDATE "accounts" SET "balance" = "balance" - 10
+   ...> WHERE "id" = 1;
+Runtime error: CHECK constraint failed: balance (19)
+sqlite> ROLLBACK;                                       
+sqlite> SELECT * FROM "accounts";
+1|Alice|0
+2|Bob|30
+3|Charlie|30
+sqlite> 
+##No harm done because of rollback in above
+
+#Race condition->Locks
+UNLOCKED
+SHARED
+EXCLUSIVE
+
+#Same terminal
+sqlite> BEGIN EXCLUSIVE TRANSACTION;
+sqlite> SELECT * FROM "accounts";
+1|Alice|0
+2|Bob|30
+3|Charlie|30
+sqlite> 
+#at the same time another terminal
+sqlite> SELECT * FROM "accounts";
+Parse error: database is locked (5)
+sqlite> 
+
+
+
+
+
+
+
+
+
