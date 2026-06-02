@@ -1,187 +1,26 @@
 #Scalability
 #Postgresql,MySQL-Database servers running on there seperate hardware(we have to online connect to them),so sclable,Run in RAM.
 #SQLite3 is an embeded Database, run in our application process.
-#mysql -u root -h 127.0.0.1 -P 3306 -p
-##
-mysql> SHOW DATABASES
-    -> ;
-+--------------------+
-| Database           |
-+--------------------+
-| information_schema |
-| mysql              |
-| performance_schema |
-| sakila             |
-| sys                |
-| world              |
-+--------------------+
-6 rows in set (0.09 sec)
-
-mysql> 
-mysql> \! cls    
-mysql> system cls
-
-#creating a new DATABASES
-mysql> CREATE DATABASE `mbta`;
-
-mysql> USE `mbta`;
-Database changed#all future queries will run on this DATABASE
-
-#Types
-CREATE TABLE `cards` (
-    `id` INT AUTO_INCREMENT,
-    PRIMARY KEY(`id`)
-);
-
-mysql> SHOW TABLES;
-+----------------+
-| Tables_in_mbta |
-+----------------+
-| cards          |
-+----------------+
-1 row in set (0.03 sec)
-
-mysql> DESCRIBE `cards`;
-+-------+------+------+-----+---------+----------------+
-| Field | Type | Null | Key | Default | Extra          |
-+-------+------+------+-----+---------+----------------+
-| id    | int  | NO   | PRI | NULL    | auto_increment |
 
 
-CHAR(M)
-VARCHAR(M)
-TEXT/TINYTEXT/MEDIUMTEXT/LONGTEXT
-BLOB
-ENUM ;only one options
-SET ;Multiple options
-DATE
-TIME(fsp)
-DATETIME(fsp)
-TIMESTAMP(fsp)
-YEAR
-Real Numbers
-FLOAT
-DOUBLE PRECISION
-DECIMAL(6,2)
+######Vertical Scaling-adding more servers
+######Horizontal scaling-distributing load accross multiple servers aka(Replication)
+##Replication-keeping copies of a db on multiple servers.
+#Replication types:
+    Single-Leader-only one leader listen for updates
+    Multi-Leader
+    Leaderless
+
+#Single leader Replication
+Leader db & follower db
+#Read replica-a copy of a db from which data may only be read.
+
+Synchronous
+Asynchronous
+
+Sharding-spliting logically around multiple servers
 
 
-CREATE TABLE `stations` (
-    `id` INT AUTO_INCREMENT,
-    `name` VARCHAR(32) NOT NULL UNIQUE,
-    `line` ENUM('blue', 'green', 'orange', 'red') NOT NULL,
-    PRIMARY KEY(`id`)
-);
-
-CREATE TABLE `swipes` (
-    `id` INT AUTO_INCREMENT,
-    `card_id` INT,
-    `station_id` INT,
-    `type` ENUM('enter','exit','deposit') NOT NULL,
-    `datetime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `amount` DECIMAL(5,2) NOT NULL CHECK(`amount` !=0),
-    PRIMARY KEY(`id`),
-    FOREIGN KEY(`card_id`) REFERENCES`cards`(`id`),
-    FOREIGN KEY(`station_id`) REFERENCES `stations`(`id`)
-);
-
-mysql> DESCRIBE `swipes`;
-+------------+--------------------------------+------+-----+-------------------+-------------------+
-| Field      | Type                           | Null | Key | Default           | Extra             |
-+------------+--------------------------------+------+-----+-------------------+-------------------+
-| id         | int                            | NO   | PRI | NULL              | auto_increment    |
-| card_id    | int                            | YES  | MUL | NULL              |                   |
-| station_id | int                            | YES  | MUL | NULL              |                   |
-| type       | enum('enter','exit','deposit') | NO   |     | NULL              |                   |
-| datetime   | datetime                       | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
-| amount     | decimal(5,2)                   | NO   |     | NULL              |                   |
-+------------+--------------------------------+------+-----+-------------------+-------------------+
-6 rows in set (0.00 sec)
-#MUL stands for multiple values it can have becuase of foreign keys
-
-#Altering Table
-ALTER TABLE `stations`
-MODIFY `line` ENUM('blue','green','orange','red','silver') NOT NULL;
 
 
-mysql> ALTER TABLE `collections`
-    -> ADD COLUMN `deleted` TINYINT DEFAULT 0;
-Query OK, 0 rows affected (0.03 sec)
-Records: 0  Duplicates: 0  Warnings: 0
-mysql> delimiter //
-mysql> CREATE PROCEDURE `current_collection` ()
-    -> BEGIN
-    -> SELECT `title`,`accession_number`,`acquired`
-    -> FROM `collections` WHERE `deleted` = 0;
-    -> END//
-Query OK, 0 rows affected (0.02 sec)
 
-mysql> delimiter ;
-mysql> CALL `current_collection` ();
-+-------------------------+------------------+------------+
-| title                   | accession_number | acquired   |
-+-------------------------+------------------+------------+
-| Farmers working at dawn | 11.6152          | 1911-08-03 |
-| Imaginative landscape   | 56.496           | NULL       |
-| Profusion of flowers    | 56.257           | 1956-04-12 |
-| Spring outing           | 14.76            | 1914-01-08 |
-+-------------------------+------------------+------------+
-4 rows in set (0.01 sec)
-
-Query OK, 0 rows affected (0.01 sec)
-
-mysql> UPDATE `collections` SET `deleted`=1
-    -> WHERE `title` = 'FARMERS working at dawn';
-Query OK, 1 row affected (0.01 sec)
-Rows matched: 1  Changed: 1  Warnings: 0
-
-mysql> CALL `current_collection` ();
-+-----------------------+------------------+------------+
-| title                 | accession_number | acquired   |
-+-----------------------+------------------+------------+
-| Imaginative landscape | 56.496           | NULL       |
-| Profusion of flowers  | 56.257           | 1956-04-12 |
-| Spring outing         | 14.76            | 1914-01-08 |
-+-----------------------+------------------+------------+
-3 rows in set (0.00 sec)
-Query OK, 0 rows affected (0.01 sec)
-mysql>
-mysql> CREATE TABLE `transactions` (
-    ->    `id` INT AUTO_INCREMENT,
-    ->    `title` VARCHAR(64) NOT NULL,
-    ->    `action` ENUM('bought','sold') NOT NULL,
-    ->    PRIMARY KEY(`id`)
-    -> );
-Query OK, 0 rows affected (0.03 sec)
-mysql> delimiter //
-mysql> CREATE PROCEDURE `sell`(IN `sold_id` INT)
-    -> BEGIN
-    -> UPDATE `collections` SET `deleted` = 1
-    -> WHERE `id` = `sold_id`;
-    -> INSERT INTO `transactions` (`title`,`action`)
-    -> VALUES((SELECT `title` FROM `collections` WHERE `id` = `sold_id`), 'sold');
-    -> END//
-Query OK, 0 rows affected (0.02 sec)
-mysql> delimiter ; 
-mysql> CALL `sell`(2);
-Query OK, 1 row affected (0.02 sec)
-
-mysql> SELECT * FROM `collections`;     
-+----+-------------------------+------------------+------------+---------+
-| id | title                   | accession_number | acquired   | deleted |
-+----+-------------------------+------------------+------------+---------+
-|  1 | Farmers working at dawn | 11.6152          | 1911-08-03 |       1 |
-|  2 | Imaginative landscape   | 56.496           | NULL       |       1 |
-|  3 | Profusion of flowers    | 56.257           | 1956-04-12 |       0 |
-|  4 | Spring outing           | 14.76            | 1914-01-08 |       0 |
-+----+-------------------------+------------------+------------+---------+
-4 rows in set (0.00 sec)
-
-mysql> SELECT * FROM `transactions`;
-+----+-----------------------+--------+
-| id | title                 | action |
-+----+-----------------------+--------+
-|  1 | Imaginative landscape | sold   |
-+----+-----------------------+--------+
-1 row in set (0.00 sec)
-
-mysql> 

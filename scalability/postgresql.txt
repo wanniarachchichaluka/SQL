@@ -1,0 +1,36 @@
+##########Postgresql
+#psql postgresql://postgres@127.0.0.1:5432/postgres  
+\! cls
+#listing DBs: \l
+postgres=# CREATE DATABASE "mbta";
+CREATE DATABASE
+
+SERIAL
+SMALLSERIAL
+SMALLSERIAL
+BIGSERIAL
+
+
+postgres=# \c "mbta"
+You are now connected to database "mbta" as user "postgres".
+mbta=# \dt
+Did not find any tables.
+
+mbta=# CREATE TABLE "cards" (
+mbta(#    "id" SERIAL,
+mbta(#    PRIMARY KEY("id")
+mbta(# );
+CREATE TABLE
+mbta=# 
+
+mbta=# \d "cards"
+
+CREATE TYPE "swipe_type"
+AS ENUM ('enter','exit','deposit');
+
+TIMESTAMP(p)
+DATE
+TIME(p)
+INTERVAL(p)
+
+NUMERIC(precision,scale)
