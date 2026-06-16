@@ -1,0 +1,1 @@
+SELECT "english_title" AS 'Most bright image by Hokusai' FROM "views" WHERE "artist" = 'Hokusai' ORDER BY "brightness" DESC LIMIT 1; 

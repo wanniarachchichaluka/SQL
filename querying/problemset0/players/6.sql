@@ -1,0 +1,1 @@
+select "first_name", "last_name", "debut" from "players" where "birth_city" = 'Pittsburgh' and "birth_state" = 'PA' ORDER BY "debut" DESC, "first_name" ASC, "last_name";

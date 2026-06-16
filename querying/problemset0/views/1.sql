@@ -1,0 +1,1 @@
+SELECT "japanese_title", "english_title" FROM "views" WHERE "entropy" = 7.22; 
